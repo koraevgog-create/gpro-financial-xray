@@ -121,6 +121,19 @@ function renderLimits(totals) {
   const root = $('limitList');
   root.replaceChildren();
   const configured = CATEGORIES.expense.filter(name => Number.isSafeInteger(monthLimits[name]) && monthLimits[name] > 0);
+  const totalLimit = configured.reduce((sum, name) => sum + monthLimits[name], 0);
+  const totalSpent = [...totals.values()].reduce((sum, cents) => sum + cents, 0);
+  const remaining = totalLimit - totalSpent;
+  $('totalLimit').textContent = fmt(totalLimit / 100);
+  $('totalLimitSpent').textContent = fmt(totalSpent / 100);
+  $('totalLimitRemaining').textContent = fmt(Math.abs(remaining) / 100);
+  $('limitRemainingLabel').textContent = remaining < 0 ? 'Превышение' : 'Осталось';
+  $('totalLimitRemaining').className = remaining < 0 ? 'negative' : 'positive';
+  $('totalLimitProgress').style.width = (totalLimit ? Math.min(100, totalSpent / totalLimit * 100) : 0) + '%';
+  $('limitSummary').classList.toggle('over', totalLimit > 0 && remaining < 0);
+  $('limitSummaryNote').textContent = totalLimit
+    ? 'Общий лимит — сумма установленных лимитов. В расходах учитываются все категории, даже без отдельного лимита.'
+    : 'Установи лимиты по категориям, чтобы увидеть их общую сумму и остаток.';
   if (!configured.length) {
     root.append(element('div', 'Лимиты пока не заданы. Выбери категорию и установи сумму.', 'empty'));
     return;
